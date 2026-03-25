@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alxpertus - Generador de Contenido</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
+        header { text-align: center; padding: 40px 0; border-bottom: 1px solid #334155; margin-bottom: 30px; }
+        h1 { font-size: 2.5rem; margin-bottom: 10px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .subtitle { color: #94a3b8; font-size: 1.1rem; }
+        
+        .tabs { display: flex; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
+        .tab { padding: 12px 24px; background: #1e293b; border: none; border-radius: 8px; color: #94a3b8; cursor: pointer; font-size: 1rem; transition: all 0.2s; }
+        .tab:hover { background: #334155; }
+        .tab.active { background: #3b82f6; color: white; }
+        
+        .panel { display: none; background: #1e293b; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+        .panel.active { display: block; }
+        
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #cbd5e1; font-weight: 500; }
+        select, input, textarea { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: white; font-size: 1rem; }
+        select:focus, input:focus, textarea:focus { outline: none; border-color: #3b82f6; }
+        textarea { min-height: 200px; resize: vertical; }
+        
+        button { padding: 12px 24px; background: #3b82f6; border: none; border-radius: 8px; color: white; font-size: 1rem; cursor: pointer; transition: all 0.2s; }
+        button:hover { background: #2563eb; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .posts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .post-card { background: #0f172a; border-radius: 12px; padding: 20px; border: 1px solid #334155; }
+        .post-card h3 { margin-bottom: 10px; color: #f1f5f9; font-size: 1.1rem; }
+        .post-meta { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .badge { padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; }
+        .badge.linkedin { background: #0a66c2; }
+        .badge.x { background: #000; }
+        .badge.reddit { background: #ff4500; }
+        .badge.general { background: #3b82f6; }
+        .badge.industria { background: #8b5cf6; }
+        .badge.tendencia { background: #10b981; }
+        .badge.practico { background: #f59e0b; }
+        
+        .btn-small { padding: 8px 16px; font-size: 0.9rem; }
+        .btn-secondary { background: #334155; }
+        .btn-secondary:hover { background: #475569; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .stat-card { background: #0f172a; border-radius: 12px; padding: 20px; text-align: center; }
+        .stat-number { font-size: 2.5rem; font-weight: bold; color: #3b82f6; }
+        .stat-label { color: #94a3b8; margin-top: 5px; }
+        
+        .error { background: #7f1d1d; padding: 12px; border-radius: 8px; margin-bottom: 20px; }
+        .success { background: #14532d; padding: 12px; border-radius: 8px; margin-bottom: 20px; }
+        
+        .loading { text-align: center; padding: 40px; color: #94a3b8; }
+        
+        .image-preview { max-width: 100%; border-radius: 8px; margin-top: 15px; }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8rem; }
+            .tabs { justify-content: center; }
+            .form-group { margin-bottom: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 Alxpertus Content Generator</h1>
+            <p class="subtitle">Equipos de Agentes IA: Tu Nueva Fuerza de Trabajo Digital en 2026</p>
+        </header>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('generar')">📝 Generar</button>
+            <button class="tab" onclick="showTab('posts')">📋 Posts</button>
+            <button class="tab" onclick="showTab('stats')">📊 Stats</button>
+        </div>
+        
+        <div id="generar" class="panel active">
+            <h2 style="margin-bottom: 20px;">Generar Nuevo Post</h2>
+            <div class="form-group">
+                <label>Plataforma</label>
+                <select id="plataforma">
+                    <option value="linkedin">LinkedIn</option>
+                    <option value="x">X (Twitter)</option>
+                    <option value="reddit">Reddit</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Tipo de Post</label>
+                <select id="tipo">
+                    <option value="general">General</option>
+                    <option value="industria">Industria</option>
+                    <option value="tendencia">Tendencia</option>
+                    <option value="practico">Práctico</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Industria (opcional)</label>
+                <input type="text" id="industria" placeholder="e.g., Real Estate, E-commerce, Coaches">
+            </div>
+            <button onclick="generarPost()" id="btn-generar">🚀 Generar Post</button>
+            <div id="resultado-generar"></div>
+        </div>
+        
+        <div id="posts" class="panel">
+            <h2 style="margin-bottom: 20px;">Historial de Posts</h2>
+            <div id="posts-list"></div>
+        </div>
+        
+        <div id="stats" class="panel">
+            <h2 style="margin-bottom: 20px;">Estadísticas</h2>
+            <div id="stats-content" class="loading">Cargando...</div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:8787' 
+            : 'https://alxpertus-content.your-account.workers.dev';
+        
+        function showTab(tabId) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (tabId === 'posts') cargarPosts();
+            if (tabId === 'stats') cargarStats();
+        }
+        
+        async function generarPost() {
+            const btn = document.getElementById('btn-generar');
+            const resultado = document.getElementById('resultado-generar');
+            const plataforma = document.getElementById('plataforma').value;
+            const tipo = document.getElementById('tipo').value;
+            const industria = document.getElementById('industria').value;
+            
+            btn.disabled = true;
+            btn.textContent = '⏳ Generando...';
+            resultado.innerHTML = '';
+            
+            try {
+                const response = await fetch(`${API_URL}/generar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plataforma, tipo, industria: industria || null })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultado.innerHTML = `
+                        <div class="success" style="margin-top: 20px;">
+                            ✅ Post generado (ID: ${data.id})
+                        </div>
+                        <textarea style="margin-top: 15px;">${data.contenido}</textarea>
+                    `;
+                } else {
+                    resultado.innerHTML = `<div class="error">❌ ${data.error}</div>`;
+                }
+            } catch (e) {
+                resultado.innerHTML = `<div class="error">❌ Error: ${e.message}</div>`;
+            }
+            
+            btn.disabled = false;
+            btn.textContent = '🚀 Generar Post';
+        }
+        
+        async function cargarPosts() {
+            const container = document.getElementById('posts-list');
+            container.innerHTML = '<div class="loading">Cargando posts...</div>';
+            
+            try {
+                const response = await fetch(`${API_URL}/posts`);
+                const posts = await response.json();
+                
+                if (posts.length === 0) {
+                    container.innerHTML = '<p>No hay posts generados aún.</p>';
+                    return;
+                }
+                
+                container.innerHTML = `<div class="posts-grid">${posts.map(post => `
+                    <div class="post-card">
+                        <h3>${post.titulo}</h3>
+                        <div class="post-meta">
+                            <span class="badge ${post.plataforma}">${post.plataforma}</span>
+                            <span class="badge ${post.tipo}">${post.tipo}</span>
+                        </div>
+                        <button class="btn-small" onclick="verPost(${post.id})">Ver detalle</button>
+                    </div>
+                `).join('')}</div>`;
+            } catch (e) {
+                container.innerHTML = `<div class="error">Error: ${e.message}</div>`;
+            }
+        }
+        
+        async function verPost(id) {
+            try {
+                const response = await fetch(`${API_URL}/posts/${id}`);
+                const post = await response.json();
+                
+                const container = document.getElementById('posts-list');
+                container.innerHTML = `
+                    <div class="post-card">
+                        <h2>${post.titulo}</h2>
+                        <div class="post-meta">
+                            <span class="badge ${post.plataforma}">${post.plataforma}</span>
+                            <span class="badge ${post.tipo}">${post.tipo}</span>
+                            ${post.industria ? `<span>Industria: ${post.industria}</span>` : ''}
+                        </div>
+                        <div class="form-group">
+                            <textarea style="min-height: 300px;">${post.contenido}</textarea>
+                        </div>
+                        ${post.imagen_url ? `<img src="${post.imagen_url}" class="image-preview">` : ''}
+                        ${post.enlace ? `<p style="margin-top: 15px;">🔗 <a href="${post.enlace}" style="color: #3b82f6;">${post.enlace}</a></p>` : ''}
+                        <button class="btn-small btn-secondary" onclick="cargarPosts()" style="margin-top: 15px;">← Volver</button>
+                    </div>
+                `;
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+        
+        async function cargarStats() {
+            const container = document.getElementById('stats-content');
+            container.innerHTML = '<div class="loading">Cargando...</div>';
+            
+            try {
+                const response = await fetch(`${API_URL}/stats`);
+                const stats = await response.json();
+                
+                container.innerHTML = `
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number">${stats.total}</div>
+                            <div class="stat-label">Total Posts</div>
+                        </div>
+                        ${Object.entries(stats.por_plataforma).map(([plat, count]) => `
+                            <div class="stat-card">
+                                <div class="stat-number">${count}</div>
+                                <div class="stat-label">${plat.toUpperCase()}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (e) {
+                container.innerHTML = `<div class="error">Error: ${e.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
