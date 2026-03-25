@@ -1,25 +1,11 @@
-name = "alxpertus-content"
+name = "alxpertus-api"
 main = "worker.js"
 compatibility_date = "2024-12-01"
 
-[env.production]
-vars = { ENVIRONMENT = "production" }
-
 [[d1_databases]]
-binding = "DB"
+binding = "alxpertus_content"
 database_name = "alxpertus-content"
-database_id = "<YOUR_DATABASE_ID>"
+database_id = "ba67f83c-6740-4316-9176-846d187e85f9"
 
 [vars]
 TEMA_CENTRAL = "Equipos de Agentes IA: Tu Nueva Fuerza de Trabajo Digital en 2026"
-
-[secrets]
-LINKEDIN_ACCESS_TOKEN
-X_API_KEY
-X_API_SECRET
-X_ACCESS_TOKEN
-X_ACCESS_TOKEN_SECRET
-REDDIT_CLIENT_ID
-REDDIT_CLIENT_SECRET
-REDDIT_USERNAME
-REDDIT_PASSWORD

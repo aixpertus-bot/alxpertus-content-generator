@@ -116,7 +116,7 @@ export default {
           return new Response(JSON.stringify({ error: "post_id requerido" }), { status: 400, headers });
         }
         
-        await env.DB.prepare(
+        await env.alxpertus_content.prepare(
           "UPDATE posts SET enlace = ?, estado = 'publicado' WHERE id = ?"
         ).bind(body.enlace || "", postId).run();
         
@@ -137,7 +137,7 @@ export default {
           return new Response(JSON.stringify({ error: result.error }), { status: 500, headers });
         }
         
-        await env.DB.prepare(
+        await env.alxpertus_content.prepare(
           "UPDATE posts SET enlace = ?, estado = 'publicado' WHERE id = ?"
         ).bind(result.url, post_id).run();
         
@@ -158,7 +158,7 @@ export default {
           return new Response(JSON.stringify({ error: result.error }), { status: 500, headers });
         }
         
-        await env.DB.prepare(
+        await env.alxpertus_content.prepare(
           "UPDATE posts SET enlace = ?, estado = 'publicado' WHERE id = ?"
         ).bind(result.url, post_id).run();
         
@@ -180,7 +180,7 @@ export default {
           return new Response(JSON.stringify({ error: result.error }), { status: 500, headers });
         }
         
-        await env.DB.prepare(
+        await env.alxpertus_content.prepare(
           "UPDATE posts SET enlace = ?, estado = 'publicado' WHERE id = ?"
         ).bind(result.url, post_id).run();
         
@@ -238,7 +238,7 @@ async function generarContenido(env, plataforma, tipo, industria) {
 }
 
 async function guardarPost(env, post) {
-  const stmt = await env.DB.prepare(
+  const stmt = await env.alxpertus_content.prepare(
     "INSERT INTO posts (titulo, plataforma, tipo, industria, contenido, estado, fecha_creacion) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))"
   ).bind(post.titulo, post.plataforma, post.tipo, post.industria || null, post.contenido, post.estado || "borrador");
   
@@ -247,7 +247,7 @@ async function guardarPost(env, post) {
 }
 
 async function obtenerPosts(env, limite = 100) {
-  const { results } = await env.DB.prepare(
+  const { results } = await env.alxpertus_content.prepare(
     "SELECT id, titulo, plataforma, tipo, industria, estado, fecha_creacion FROM posts ORDER BY fecha_creacion DESC LIMIT ?"
   ).bind(limite).all();
   
@@ -263,7 +263,7 @@ async function obtenerPosts(env, limite = 100) {
 }
 
 async function obtenerPostPorId(env, id) {
-  const { results } = await env.DB.prepare(
+  const { results } = await env.alxpertus_content.prepare(
     "SELECT * FROM posts WHERE id = ?"
   ).bind(id).all();
   
@@ -285,23 +285,23 @@ async function obtenerPostPorId(env, id) {
 }
 
 async function actualizarImagen(env, postId, url) {
-  await env.DB.prepare(
+  await env.alxpertus_content.prepare(
     "UPDATE posts SET imagen_url = ? WHERE id = ?"
   ).bind(url, postId).run();
 }
 
 async function obtenerStats(env) {
-  const total = await env.DB.prepare("SELECT COUNT(*) as count FROM posts").first();
+  const total = await env.alxpertus_content.prepare("SELECT COUNT(*) as count FROM posts").first();
   
   const porPlataforma = {};
   for (const plat of ["linkedin", "x", "reddit"]) {
-    const r = await env.DB.prepare(`SELECT COUNT(*) as count FROM posts WHERE plataforma = ?`).bind(plat).first();
+    const r = await env.alxpertus_content.prepare(`SELECT COUNT(*) as count FROM posts WHERE plataforma = ?`).bind(plat).first();
     porPlataforma[plat] = r.count;
   }
 
   const porTipo = {};
   for (const tipo of ["general", "industria", "tendencia", "practico"]) {
-    const r = await env.DB.prepare(`SELECT COUNT(*) as count FROM posts WHERE tipo = ?`).bind(tipo).first();
+    const r = await env.alxpertus_content.prepare(`SELECT COUNT(*) as count FROM posts WHERE tipo = ?`).bind(tipo).first();
     porTipo[tipo] = r.count;
   }
 
