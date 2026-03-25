@@ -144,6 +144,27 @@ export default {
         return new Response(JSON.stringify({ success: true, url: result.url, linkedin_id: result.id }), { headers });
       }
 
+      if (path === "/publicar/x" && request.method === "POST") {
+        const body = await request.json();
+        const { post_id, contenido, titulo } = body;
+        
+        if (!post_id || !contenido) {
+          return new Response(JSON.stringify({ error: "post_id y contenido requeridos" }), { status: 400, headers });
+        }
+        
+        const result = await publicarX(env, contenido);
+        
+        if (result.error) {
+          return new Response(JSON.stringify({ error: result.error }), { status: 500, headers });
+        }
+        
+        await env.DB.prepare(
+          "UPDATE posts SET enlace = ?, estado = 'publicado' WHERE id = ?"
+        ).bind(result.url, post_id).run();
+        
+        return new Response(JSON.stringify({ success: true, url: result.url, x_id: result.id }), { headers });
+      }
+
       return new Response(JSON.stringify({ error: "Not found" }), { status: 404, headers });
     } catch (e) {
       return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
@@ -351,4 +372,81 @@ async function publicarLinkedIn(env, contenido, titulo) {
     id: postId,
     url: `https://www.linkedin.com/feed/update/urn:li:share:${postId}`
   };
+}
+
+async function publicarX(env, contenido) {
+  const apiKey = env.X_API_KEY;
+  const apiSecret = env.X_API_SECRET;
+  const accessToken = env.X_ACCESS_TOKEN;
+  const accessTokenSecret = env.X_ACCESS_TOKEN_SECRET;
+  
+  if (!apiKey || !apiSecret || !accessToken || !accessTokenSecret) {
+    return { error: "X API credentials not configured" };
+  }
+
+  const text = contenido.slice(0, 280);
+  
+  const nonce = Math.random().toString(36).substring(2, 15);
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  
+  const params = {
+    oauth_consumer_key: apiKey,
+    oauth_token: accessToken,
+    oauth_signature_method: "HMAC-SHA1",
+    oauth_timestamp: timestamp,
+    oauth_nonce: nonce,
+    oauth_version: "1.0",
+    text: text
+  };
+  
+  const sortedParams = Object.keys(params).sort().map(k => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`).join('&');
+  const signatureBase = `POST&${encodeURIComponent('https://api.x.com/2/tweets')}&${encodeURIComponent(sortedParams)}`;
+  
+  const signingKey = `${encodeURIComponent(apiSecret)}&${encodeURIComponent(accessTokenSecret)}`;
+  const signature = await hmacSha1(signingKey, signatureBase);
+  
+  params.oauth_signature = signature;
+  
+  const authHeader = 'OAuth ' + Object.keys(params)
+    .filter(k => k.startsWith('oauth_'))
+    .map(k => `${encodeURIComponent(k)}="${encodeURIComponent(params[k])}"`)
+    .join(', ');
+
+  const response = await fetch("https://api.x.com/2/tweets", {
+    method: "POST",
+    headers: {
+      "Authorization": authHeader,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ text })
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    return { error: `X API Error: ${err.slice(0, 200)}` };
+  }
+
+  const data = await response.json();
+  return {
+    id: data.data.id,
+    url: `https://x.com/i/status/${data.data.id}`
+  };
+}
+
+async function hmacSha1(key, message) {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(key);
+  const msgData = encoder.encode(message);
+  
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: "HMAC", hash: "SHA-1" },
+    false,
+    ["sign"]
+  );
+  
+  const signature = await crypto.subtle.sign("HMAC", cryptoKey, msgData);
+  
+  return btoa(String.fromCharCode(...new Uint8Array(signature)));
 }

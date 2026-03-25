@@ -114,8 +114,8 @@
         </div>
         
         <div id="publicar" class="panel">
-            <h2 style="margin-bottom: 20px;">🚀 Publicar en LinkedIn</h2>
-            <p style="color: #94a3b8; margin-bottom: 20px;">Selecciona un post para publicar directamente en LinkedIn</p>
+            <h2 style="margin-bottom: 20px;">🚀 Publicar</h2>
+            <p style="color: #94a3b8; margin-bottom: 20px;">Selecciona un post para publicar</p>
             <div id="posts-publicar"></div>
         </div>
         
@@ -283,7 +283,11 @@
                             <span class="badge ${post.plataforma}">${post.plataforma}</span>
                             <span class="badge ${post.tipo}">${post.tipo}</span>
                         </div>
-                        <button class="btn-small" onclick="publicarEnLinkedIn(${post.id})">📤 Publicar en LinkedIn</button>
+                        <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                            ${post.plataforma === 'linkedin' ? `<button class="btn-small" onclick="publicarEnLinkedIn(${post.id})">📤 LinkedIn</button>` : ''}
+                            ${post.plataforma === 'x' ? `<button class="btn-small" onclick="publicarEnX(${post.id})">🐦 X (Twitter)</button>` : ''}
+                            ${post.plataforma === 'reddit' ? `<button class="btn-small" onclick="alert('Reddit requiere configuración adicional')">🔴 Reddit</button>` : ''}
+                        </div>
                     </div>
                 `).join('')}</div>`;
             } catch (e) {
@@ -312,6 +316,36 @@
                 
                 if (response.ok) {
                     alert('✅ ¡Publicado en LinkedIn!\n\nURL: ' + result.url);
+                    cargarPostsPublicar();
+                } else {
+                    alert('❌ Error: ' + (result.error || 'Error desconocido'));
+                }
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+        
+        async function publicarEnX(postId) {
+            if (!confirm('¿Publicar este post en X? (Se truncará a 280 caracteres)')) return;
+            
+            try {
+                const postResponse = await fetch(`${API_URL}/posts/${postId}`);
+                const post = await postResponse.json();
+                
+                const response = await fetch(`${API_URL}/publicar/x`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        post_id: postId,
+                        contenido: post.contenido,
+                        titulo: post.titulo
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('✅ ¡Publicado en X!\n\nURL: ' + result.url);
                     cargarPostsPublicar();
                 } else {
                     alert('❌ Error: ' + (result.error || 'Error desconocido'));

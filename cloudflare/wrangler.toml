@@ -15,3 +15,7 @@ TEMA_CENTRAL = "Equipos de Agentes IA: Tu Nueva Fuerza de Trabajo Digital en 202
 
 [secrets]
 LINKEDIN_ACCESS_TOKEN
+X_API_KEY
+X_API_SECRET
+X_ACCESS_TOKEN
+X_ACCESS_TOKEN_SECRET
