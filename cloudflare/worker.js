@@ -165,6 +165,28 @@ export default {
         return new Response(JSON.stringify({ success: true, url: result.url, x_id: result.id }), { headers });
       }
 
+      if (path === "/publicar/reddit" && request.method === "POST") {
+        const body = await request.json();
+        const { post_id, contenido, titulo, subreddit } = body;
+        
+        if (!post_id || !contenido) {
+          return new Response(JSON.stringify({ error: "post_id y contenido requeridos" }), { status: 400, headers });
+        }
+        
+        const sub = subreddit || "growmybusinessnow";
+        const result = await publicarReddit(env, titulo, contenido, sub);
+        
+        if (result.error) {
+          return new Response(JSON.stringify({ error: result.error }), { status: 500, headers });
+        }
+        
+        await env.DB.prepare(
+          "UPDATE posts SET enlace = ?, estado = 'publicado' WHERE id = ?"
+        ).bind(result.url, post_id).run();
+        
+        return new Response(JSON.stringify({ success: true, url: result.url, reddit_id: result.id }), { headers });
+      }
+
       return new Response(JSON.stringify({ error: "Not found" }), { status: 404, headers });
     } catch (e) {
       return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
@@ -449,4 +471,62 @@ async function hmacSha1(key, message) {
   const signature = await crypto.subtle.sign("HMAC", cryptoKey, msgData);
   
   return btoa(String.fromCharCode(...new Uint8Array(signature)));
+}
+
+async function publicarReddit(env, titulo, contenido, subreddit) {
+  const clientId = env.REDDIT_CLIENT_ID;
+  const clientSecret = env.REDDIT_CLIENT_SECRET;
+  const username = env.REDDIT_USERNAME;
+  const password = env.REDDIT_PASSWORD;
+  
+  if (!clientId || !clientSecret || !username || !password) {
+    return { error: "Reddit credentials not configured" };
+  }
+
+  const authString = btoa(`${clientId}:${clientSecret}`);
+  
+  const tokenResponse = await fetch("https://www.reddit.com/api/v1/access_token", {
+    method: "POST",
+    headers: {
+      "Authorization": `Basic ${authString}`,
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: `grant_type=password&username=${username}&password=${password}`
+  });
+
+  if (!tokenResponse.ok) {
+    const err = await tokenResponse.text();
+    return { error: `Reddit auth error: ${err.slice(0, 100)}` };
+  }
+
+  const tokenData = await tokenResponse.json();
+  const accessToken = tokenData.access_token;
+
+  const redditPost = {
+    sr: subreddit,
+    kind: "self",
+    title: titulo.slice(0, 300),
+    text: contenido.slice(0, 10000)
+  };
+
+  const postResponse = await fetch("https://oauth.reddit.com/api/submit", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${accessToken}`,
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: new URLSearchParams(redditPost).toString()
+  });
+
+  if (!postResponse.ok) {
+    const err = await postResponse.text();
+    return { error: `Reddit post error: ${err.slice(0, 100)}` };
+  }
+
+  const postData = await postResponse.json();
+  
+  return {
+    id: postData.json.data.id,
+    url: `https://reddit.com/r/${subreddit}/comments/${postData.json.data.id}`
+  };
 }

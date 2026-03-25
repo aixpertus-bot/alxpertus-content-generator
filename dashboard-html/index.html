@@ -286,7 +286,7 @@
                         <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
                             ${post.plataforma === 'linkedin' ? `<button class="btn-small" onclick="publicarEnLinkedIn(${post.id})">📤 LinkedIn</button>` : ''}
                             ${post.plataforma === 'x' ? `<button class="btn-small" onclick="publicarEnX(${post.id})">🐦 X (Twitter)</button>` : ''}
-                            ${post.plataforma === 'reddit' ? `<button class="btn-small" onclick="alert('Reddit requiere configuración adicional')">🔴 Reddit</button>` : ''}
+                            ${post.plataforma === 'reddit' ? `<button class="btn-small" onclick="publicarEnReddit(${post.id})">🔴 Reddit</button>` : ''}
                         </div>
                     </div>
                 `).join('')}</div>`;
@@ -346,6 +346,37 @@
                 
                 if (response.ok) {
                     alert('✅ ¡Publicado en X!\n\nURL: ' + result.url);
+                    cargarPostsPublicar();
+                } else {
+                    alert('❌ Error: ' + (result.error || 'Error desconocido'));
+                }
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+        
+        async function publicarEnReddit(postId) {
+            if (!confirm('¿Publicar este post en Reddit?')) return;
+            
+            try {
+                const postResponse = await fetch(`${API_URL}/posts/${postId}`);
+                const post = await postResponse.json();
+                
+                const response = await fetch(`${API_URL}/publicar/reddit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        post_id: postId,
+                        contenido: post.contenido,
+                        titulo: post.titulo,
+                        subreddit: post.industria || 'growmybusinessnow'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('✅ ¡Publicado en Reddit!\n\nURL: ' + result.url);
                     cargarPostsPublicar();
                 } else {
                     alert('❌ Error: ' + (result.error || 'Error desconocido'));
