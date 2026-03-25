@@ -123,6 +123,27 @@ export default {
         return new Response(JSON.stringify({ success: true, post_id: postId }), { headers });
       }
 
+      if (path === "/publicar/linkedin" && request.method === "POST") {
+        const body = await request.json();
+        const { post_id, contenido, titulo } = body;
+        
+        if (!post_id || !contenido) {
+          return new Response(JSON.stringify({ error: "post_id y contenido requeridos" }), { status: 400, headers });
+        }
+        
+        const result = await publicarLinkedIn(env, contenido, titulo);
+        
+        if (result.error) {
+          return new Response(JSON.stringify({ error: result.error }), { status: 500, headers });
+        }
+        
+        await env.DB.prepare(
+          "UPDATE posts SET enlace = ?, estado = 'publicado' WHERE id = ?"
+        ).bind(result.url, post_id).run();
+        
+        return new Response(JSON.stringify({ success: true, url: result.url, linkedin_id: result.id }), { headers });
+      }
+
       return new Response(JSON.stringify({ error: "Not found" }), { status: 404, headers });
     } catch (e) {
       return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
@@ -286,4 +307,48 @@ async function blobToBase64(blob) {
     binary += String.fromCharCode(bytes[i]);
   }
   return btoa(binary);
+}
+
+async function publicarLinkedIn(env, contenido, titulo) {
+  const authorUrn = "urn:li:person:78mka4g0e964zl";
+  
+  const linkedInPost = {
+    author: authorUrn,
+    lifecycleState: "PUBLISHED",
+    specificContent: {
+      "com.linkedin.ugc.ShareContent": {
+        shareCommentary: {
+          text: contenido.slice(0, 3000)
+        },
+        shareMediaCategory: "NONE"
+      }
+    },
+    visibility: {
+      "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
+    }
+  };
+
+  const response = await fetch("https://api.linkedin.com/v2/ugcPosts", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${env.LINKEDIN_ACCESS_TOKEN}`,
+      "Content-Type": "application/json",
+      "X-Restli-Protocol-Version": "2.0.0"
+    },
+    body: JSON.stringify(linkedInPost)
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    return { error: `LinkedIn API Error: ${err.slice(0, 200)}` };
+  }
+
+  const linkedInId = response.headers.get("x-restli-id") || "unknown";
+  const urnParts = linkedInId.split(":");
+  const postId = urnParts[urnParts.length - 1];
+  
+  return {
+    id: postId,
+    url: `https://www.linkedin.com/feed/update/urn:li:share:${postId}`
+  };
 }

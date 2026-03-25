@@ -77,6 +77,7 @@
         <div class="tabs">
             <button class="tab active" onclick="showTab('generar')">📝 Generar</button>
             <button class="tab" onclick="showTab('posts')">📋 Posts</button>
+            <button class="tab" onclick="showTab('publicar')">🚀 Publicar</button>
             <button class="tab" onclick="showTab('stats')">📊 Stats</button>
         </div>
         
@@ -112,6 +113,12 @@
             <div id="posts-list"></div>
         </div>
         
+        <div id="publicar" class="panel">
+            <h2 style="margin-bottom: 20px;">🚀 Publicar en LinkedIn</h2>
+            <p style="color: #94a3b8; margin-bottom: 20px;">Selecciona un post para publicar directamente en LinkedIn</p>
+            <div id="posts-publicar"></div>
+        </div>
+        
         <div id="stats" class="panel">
             <h2 style="margin-bottom: 20px;">Estadísticas</h2>
             <div id="stats-content" class="loading">Cargando...</div>
@@ -131,6 +138,7 @@
             
             if (tabId === 'posts') cargarPosts();
             if (tabId === 'stats') cargarStats();
+            if (tabId === 'publicar') cargarPostsPublicar();
         }
         
         async function generarPost() {
@@ -250,6 +258,66 @@
                 `;
             } catch (e) {
                 container.innerHTML = `<div class="error">Error: ${e.message}</div>`;
+            }
+        }
+        
+        async function cargarPostsPublicar() {
+            const container = document.getElementById('posts-publicar');
+            container.innerHTML = '<div class="loading">Cargando posts...</div>';
+            
+            try {
+                const response = await fetch(`${API_URL}/posts`);
+                const posts = await response.json();
+                
+                const pendientes = posts.filter(p => p.estado === 'borrador');
+                
+                if (pendientes.length === 0) {
+                    container.innerHTML = '<p>No hay posts pendientes por publicar.</p>';
+                    return;
+                }
+                
+                container.innerHTML = `<div class="posts-grid">${pendientes.map(post => `
+                    <div class="post-card">
+                        <h3>${post.titulo}</h3>
+                        <div class="post-meta">
+                            <span class="badge ${post.plataforma}">${post.plataforma}</span>
+                            <span class="badge ${post.tipo}">${post.tipo}</span>
+                        </div>
+                        <button class="btn-small" onclick="publicarEnLinkedIn(${post.id})">📤 Publicar en LinkedIn</button>
+                    </div>
+                `).join('')}</div>`;
+            } catch (e) {
+                container.innerHTML = `<div class="error">Error: ${e.message}</div>`;
+            }
+        }
+        
+        async function publicarEnLinkedIn(postId) {
+            if (!confirm('¿Publicar este post en LinkedIn?')) return;
+            
+            try {
+                const postResponse = await fetch(`${API_URL}/posts/${postId}`);
+                const post = await postResponse.json();
+                
+                const response = await fetch(`${API_URL}/publicar/linkedin`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        post_id: postId,
+                        contenido: post.contenido,
+                        titulo: post.titulo
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('✅ ¡Publicado en LinkedIn!\n\nURL: ' + result.url);
+                    cargarPostsPublicar();
+                } else {
+                    alert('❌ Error: ' + (result.error || 'Error desconocido'));
+                }
+            } catch (e) {
+                alert('Error: ' + e.message);
             }
         }
     </script>

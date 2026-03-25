@@ -99,6 +99,16 @@ curl -X POST https://tu-worker.workers.dev/posts/1/imagen
 - Hugging Face FLUX tiene límite gratuito mensual (~1000 imágenes)
 - Groq tiene límite gratuito generoso
 
+## Configurar LinkedIn Token
+
+```bash
+# Agregar el token como secreto de Cloudflare
+wrangler secret put LINKEDIN_ACCESS_TOKEN
+# Cuando te pida el valor, pega tu token de LinkedIn
+```
+
+El token empieza con `AQVq_...`
+
 ---
 
 ## Integración con Make.com

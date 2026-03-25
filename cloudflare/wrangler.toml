@@ -12,3 +12,6 @@ database_id = "<YOUR_DATABASE_ID>"
 
 [vars]
 TEMA_CENTRAL = "Equipos de Agentes IA: Tu Nueva Fuerza de Trabajo Digital en 2026"
+
+[secrets]
+LINKEDIN_ACCESS_TOKEN
