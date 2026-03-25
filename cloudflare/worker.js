@@ -92,6 +92,37 @@ export default {
         return new Response(JSON.stringify(stats), { headers });
       }
 
+      if (path === "/webhook" && request.method === "GET") {
+        const posts = await obtenerPosts(env, 1);
+        if (posts.length === 0) {
+          return new Response(JSON.stringify({ error: "No hay posts disponibles" }), { headers });
+        }
+        const post = await obtenerPostPorId(env, posts[0].id);
+        return new Response(JSON.stringify({
+          titulo: post.titulo,
+          contenido: post.contenido,
+          plataforma: post.plataforma,
+          tipo: post.tipo,
+          industria: post.industria,
+          imagen_url: post.imagen_url
+        }), { headers });
+      }
+
+      if (path === "/webhook" && request.method === "POST") {
+        const body = await request.json();
+        const postId = body.post_id;
+        
+        if (!postId) {
+          return new Response(JSON.stringify({ error: "post_id requerido" }), { status: 400, headers });
+        }
+        
+        await env.DB.prepare(
+          "UPDATE posts SET enlace = ?, estado = 'publicado' WHERE id = ?"
+        ).bind(body.enlace || "", postId).run();
+        
+        return new Response(JSON.stringify({ success: true, post_id: postId }), { headers });
+      }
+
       return new Response(JSON.stringify({ error: "Not found" }), { status: 404, headers });
     } catch (e) {
       return new Response(JSON.stringify({ error: e.message }), { status: 500, headers });
@@ -151,10 +182,10 @@ async function guardarPost(env, post) {
   return result.meta.last_row_id;
 }
 
-async function obtenerPosts(env) {
+async function obtenerPosts(env, limite = 100) {
   const { results } = await env.DB.prepare(
-    "SELECT id, titulo, plataforma, tipo, industria, estado, fecha_creacion FROM posts ORDER BY fecha_creacion DESC LIMIT 100"
-  ).all();
+    "SELECT id, titulo, plataforma, tipo, industria, estado, fecha_creacion FROM posts ORDER BY fecha_creacion DESC LIMIT ?"
+  ).bind(limite).all();
   
   return results.map(row => ({
     id: row.id,
