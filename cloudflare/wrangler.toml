@@ -2,10 +2,13 @@ name = "alxpertus-api"
 main = "worker.js"
 compatibility_date = "2024-12-01"
 
+[ai]
+binding = "AI"
+
 [[d1_databases]]
 binding = "alxpertus_content"
 database_name = "alxpertus-content"
 database_id = "ba67f83c-6740-4316-9176-846d187e85f9"
 
 [vars]
-TEMA_CENTRAL = "Equipos de Agentes IA: Tu Nueva Fuerza de Trabajo Digital en 2026"
+TEMA_CENTRAL = "AI Agents Teams: Your New Digital Workforce in 2026"
