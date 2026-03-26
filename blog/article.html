@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Article - Alxpertus</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/" class="logo">Alxpertus</a>
+      <div class="nav-links">
+        <a href="/">Blog</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="article-container">
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p>Loading article...</p>
+    </div>
+    <article id="article-content" class="article"></article>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2026 Alxpertus. All rights reserved.</p>
+  </footer>
+
+  <script>
+    const API_URL = 'https://alxpertus-api.aixpertus.workers.dev';
+    
+    function getQueryParam(name) {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(name);
+    }
+    
+    async function loadArticle() {
+      const id = getQueryParam('id');
+      if (!id) {
+        window.location.href = '/';
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_URL}/posts/${id}`);
+        const post = await response.json();
+        
+        if (!post || post.error) {
+          document.getElementById('loading').innerHTML = '<p class="error">Article not found</p>';
+          return;
+        }
+        
+        const container = document.getElementById('article-content');
+        const loading = document.getElementById('loading');
+        
+        loading.style.display = 'none';
+        
+        document.title = `${post.titulo} - Alxpertus`;
+        
+        container.innerHTML = `
+          <header class="article-header">
+            <a href="/" class="back-link">← Back to Blog</a>
+            <span class="article-date">${formatDate(post.fecha_creacion)}</span>
+            <h1 class="article-title">${post.titulo}</h1>
+            <div class="article-meta">
+              <span class="tag">${post.tipo || 'Article'}</span>
+              <span class="tag">${post.plataforma}</span>
+            </div>
+          </header>
+          
+          ${post.imagen_url ? `
+            <div class="article-image">
+              <img src="${post.imagen_url}" alt="${post.titulo}" />
+            </div>
+          ` : ''}
+          
+          <div class="article-body">
+            ${post.contenido}
+          </div>
+        `;
+      } catch (error) {
+        console.error('Error loading article:', error);
+        document.getElementById('loading').innerHTML = '<p class="error">Error loading article. Please try again later.</p>';
+      }
+    }
+    
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+    
+    loadArticle();
+  </script>
+</body>
+</html>

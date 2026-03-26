@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Agents Blog - Alxpertus</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/" class="logo">Alxpertus</a>
+      <div class="nav-links">
+        <a href="/">Blog</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-content">
+      <h1>The Future of AI Agents in the Workplace</h1>
+      <p>Insights on how AI is transforming modern business and work</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p>Loading articles...</p>
+    </div>
+    <div id="articles-grid" class="articles-grid"></div>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2026 Alxpertus. All rights reserved.</p>
+  </footer>
+
+  <script>
+    const API_URL = 'https://alxpertus-api.aixpertus.workers.dev';
+    
+    async function loadArticles() {
+      try {
+        const response = await fetch(`${API_URL}/posts?limite=50`);
+        const posts = await response.json();
+        
+        const blogPosts = posts.filter(p => p.plataforma === 'blog');
+        
+        const grid = document.getElementById('articles-grid');
+        const loading = document.getElementById('loading');
+        
+        loading.style.display = 'none';
+        
+        if (blogPosts.length === 0) {
+          grid.innerHTML = '<p class="no-articles">No articles yet. Check back soon!</p>';
+          return;
+        }
+        
+        blogPosts.forEach(post => {
+          const card = document.createElement('article');
+          card.className = 'article-card';
+          card.onclick = () => window.location.href = `article.html?id=${post.id}`;
+          card.innerHTML = `
+            <div class="card-image">
+              ${post.imagen_url ? `<img src="${post.imagen_url}" alt="${post.titulo}" />` : '<div class="placeholder-image"></div>'}
+            </div>
+            <div class="card-content">
+              <span class="card-date">${formatDate(post.fecha_creacion)}</span>
+              <h2 class="card-title">${post.titulo}</h2>
+              <p class="card-excerpt">${post.contenido ? post.contenido.substring(0, 150) + '...' : ''}</p>
+              <span class="read-more">Read more →</span>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+      } catch (error) {
+        console.error('Error loading articles:', error);
+        document.getElementById('loading').innerHTML = '<p class="error">Error loading articles. Please try again later.</p>';
+      }
+    }
+    
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+    
+    loadArticles();
+  </script>
+</body>
+</html>
