@@ -172,7 +172,7 @@ with tabs[0]:
                     response = requests.post(
                         f"{API_URL}/generar-serie",
                         json={"tipo": tipo, "industria": industria},
-                        timeout=60
+                        timeout=180
                     )
                     
                     if response.status_code == 200:
