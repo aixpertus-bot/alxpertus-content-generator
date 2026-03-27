@@ -178,36 +178,32 @@ with tabs[0]:
                     if response.status_code == 200:
                         data = response.json()
                         
-                        # Handle both dict and list responses
-                        if isinstance(data.get('posts'), dict):
+                        # Handle new async response
+                        if data.get('message'):
+                            st.success(f"✅ {data['message']}")
+                            st.info("⏳ Los posts se están generando. Verifica en 'All Posts' en unos segundos.")
+                        elif isinstance(data.get('posts'), dict):
                             posts_list = list(data['posts'].values())
                             st.success(f"✅ Serie optimizada generada: {len(posts_list)} posts!")
                             
-                            for post in posts_list:
-                                if post.get('imagen_url'):
-                                    st.image(post['imagen_url'], width=150)
+                            for p in posts_list:
+                                if p.get('imagen_url'):
+                                    st.image(p['imagen_url'], width=150)
                         else:
                             posts_list = data.get('posts', [])
                             st.success(f"✅ Serie de {len(posts_list)} posts generada!")
                             
-                            for post in posts_list:
-                                if post.get('imagen_url'):
-                                    st.image(post['imagen_url'], width=150)
-                            if publicacion_automatica and post.get('imagen_url'):
-                                # Auto publish
-                                pub_response = requests.post(f"{API_URL}/posts/{post['id']}/publicar", timeout=30)
-                                if pub_response.status_code == 200:
-                                    st.success(f"✅ {post['plataforma'].upper()} publicado: {pub_response.json().get('url')}")
-                                else:
-                                    st.error(f"❌ Error publicando {post['plataforma']}")
+                            for p in posts_list:
+                                if p.get('imagen_url'):
+                                    st.image(p['imagen_url'], width=150)
                     else:
                         st.error(f"Error: {response.text}")
                 else:
                     # Generate single post with image
                     response = requests.post(
-                        f"{API_URL}/generar-y-guardar",
-                        json={"plataforma": plataforma, "tipo": tipo, "industria": industria, "generar_imagen": True},
-                        timeout=60
+                        f"{API_URL}/generar",
+                        json={"plataforma": plataforma, "tipo": tipo, "industria": industria},
+                        timeout=120
                     )
                     
                     if response.status_code == 200:
