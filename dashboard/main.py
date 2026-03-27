@@ -4,7 +4,7 @@ import json
 import os
 from datetime import datetime
 
-API_URL = os.environ.get("API_URL", "http://localhost:8000")
+API_URL = os.environ.get("API_URL", "https://alxpertus-api.aixpertus.workers.dev")
 
 st.set_page_config(
     page_title="Alxpertus Content Generator", 
