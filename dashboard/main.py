@@ -116,7 +116,12 @@ with tabs[0]:
     col1, col2 = st.columns(2)
     
     with col1:
-        generar_todas = st.checkbox("🔄 Generate optimized series (Blog + LinkedIn + X with same image + Reddit without image)", value=False)
+        generar_todas = st.checkbox("🔄 Generate full series (Blog + LinkedIn + X + Reddit)", value=False)
+        
+        if generar_todas:
+            st.info("💡 Generará contenido para las 4 plataformas. Puede tomar 2-3 minutos.")
+        else:
+            st.info("💡 Generará solo para la plataforma seleccionada.")
         
         plataforma = st.selectbox(
             "Platform", 
